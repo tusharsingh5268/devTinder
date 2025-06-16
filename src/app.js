@@ -1,35 +1,29 @@
 const express = require("express");
-const { adminAuth, userAuth } = require("./middlewares/auth");
+const connectDB = require("./config/database");
+const User = require("./models/user");
+
 const app = express();
 
-app.use("/admin", adminAuth);
+//Middleware for coverting readable stream to Javascript object
+app.use(express.json());
 
-app.get("/user", userAuth, (req, res) => {
-  res.send("User response done");
-});
-
-app.get("/admin/getData", (req, res) => {
+app.post("/signup", async (req, res) => {
+  const user = new User(req.body);
   try {
-    console.log("get All the route Handler");
-    throw Error("sdfsfsd");
-    res.send("Response for get all data");
+    await user.save();
+    res.send("Data Saved Successfully");
   } catch (err) {
-    res.status(500).send("Something went wrong");
+    res.status(400).send("Failed to save data");
   }
 });
 
-app.get("/admin/deleteData", (req, res) => {
-  console.log("Delete Data route Handler");
-  res.send("Delete Data");
-});
-// we can also use Middleware for error handling and always write it at last
-app.use("/", (err, req, res, next) => {
-  console.log("err", err);
-  if (err) {
-    res.status(500).send("Something went wrong");
-  }
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000...");
-});
+connectDB()
+  .then(() => {
+    console.log("Connection Established successfully");
+    app.listen(3000, () => {
+      console.log("Server is running on port 3000...");
+    });
+  })
+  .catch((err) => {
+    console.log("Connection failed");
+  });
