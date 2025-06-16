@@ -7,6 +7,7 @@ const app = express();
 //Middleware for coverting readable stream to Javascript object
 app.use(express.json());
 
+//When user login
 app.post("/signup", async (req, res) => {
   const user = new User(req.body);
   try {
@@ -14,6 +15,37 @@ app.post("/signup", async (req, res) => {
     res.send("Data Saved Successfully");
   } catch (err) {
     res.status(400).send("Failed to save data");
+  }
+});
+
+//Get data from database based on email id
+app.get("/user", async (req, res) => {
+  const userEmail = req.body.emailId;
+  console.log("userEmail", userEmail);
+  try {
+    const users = await User.find({ email: userEmail });
+    console.log("users", users);
+    if (users.length === 0) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(users);
+    }
+  } catch (err) {
+    res.status(400).send("Something went wrong");
+  }
+});
+
+//Get all data from database
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find({});
+    if (users.length === 0) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(users);
+    }
+  } catch (err) {
+    res.status(400).send("Something went wrong");
   }
 });
 
