@@ -19,12 +19,17 @@ const userSchema = mongoose.Schema(
       lowercase: true,
       validate(value) {
         if (!validator.isEmail(value)) {
-          throw new Error("Please give correct email address");
+          throw new Error("Please give correct email address!");
         }
       },
     },
     password: {
       type: String,
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Please create strong password!");
+        }
+      },
     },
     age: {
       type: String,

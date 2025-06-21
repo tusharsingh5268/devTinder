@@ -1,9 +1,9 @@
 const express = require("express");
 const connectDB = require("./config/database");
 const User = require("./models/user");
-
+const { validation } = require("./utils/validation");
 const app = express();
-
+const bcrypt = require("bcrypt");
 //Middleware for coverting readable stream to Javascript object
 app.use(express.json());
 
@@ -40,12 +40,24 @@ app.get("/feed", async (req, res) => {
 
 //When user login
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
   try {
+    const { firstName, lastName, email, password } = req.body;
+    //  Validation
+    validation(req);
+    //  Encyption
+    const passwordHash = await bcrypt.hash(password, 10);
+    // creating user object
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: passwordHash,
+    });
+    //  Save data in the database
     await user.save();
     res.send("Data Saved Successfully");
   } catch (err) {
-    res.status(400).send("Something went wrong" + err.message);
+    res.status(400).send("Something went wrong " + err.message);
   }
 });
 
