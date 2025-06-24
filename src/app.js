@@ -4,9 +4,12 @@ const User = require("./models/user");
 const { validation } = require("./utils/validation");
 const app = express();
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 //Middleware for coverting readable stream to Javascript object
 app.use(express.json());
-
+app.use(cookieParser());
 //Get data from database based on email id
 app.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;
@@ -38,7 +41,7 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-//When user login
+//When user sign up
 app.post("/signup", async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -61,45 +64,42 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-//Delete the user by user id
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.post("/login", async (req, res) => {
   try {
-    console.log("Deleted user id");
-    await User.findByIdAndDelete(userId);
-    res.send("Successfully deleted the User");
+    const { email, password } = req.body;
+    console.log("email", email, password);
+    const user = await User.findOne({ email: email });
+    console.log("user", user);
+    if (!user) {
+      throw new Error("Invalid Credentials");
+    }
+
+    const isPasswordValid = await user.validatePassword(password);
+    console.log("isPasswordValid", isPasswordValid);
+    if (isPasswordValid) {
+      const token = await user.getJWT();
+      res.cookie("token", token);
+      res.send("Login Successful!!");
+    } else {
+      throw new Error("Invalid Credentials");
+    }
   } catch (err) {
-    res.status(400).send("Failed to save data");
+    res.status(400).send("Something went wrong " + err.message);
   }
 });
 
-//Update the user by user id
-app.patch("/user/:userId", async (req, res) => {
-  const userId = req.params?.userId;
-  console.log("userId", userId);
-  const data = req.body;
-
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const ALLOWED_UPDATE = ["photoUrl", "about", "skills"];
-    const isUpdateAllowed = Object.keys(data).every((k) => {
-      console.log("k", k);
-      return ALLOWED_UPDATE.includes(k);
-    });
-    console.log("isUpdateAllowed", isUpdateAllowed);
-    if (!isUpdateAllowed) {
-      throw new Error("Update not allowed");
-    }
-
-    if (data?.skills.length > 10) {
-      throw new Error("Skills should be less than 10");
-    }
-    await User.findByIdAndUpdate(userId, data, {
-      runValidators: true,
-    });
-    res.send("Updated Successfully");
+    const user = req.user;
+    res.send(user);
   } catch (err) {
-    res.status(400).send("Failed to save data" + " " + err.message);
+    res.status(400).send("Something went wrong profile " + err.message);
   }
+});
+app.get("/sendConnectionRequest", userAuth, (req, res) => {
+  const user = req.user;
+
+  res.send(user.firstName + "'s Connection done");
 });
 
 connectDB()
