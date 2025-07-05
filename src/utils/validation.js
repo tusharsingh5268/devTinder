@@ -33,8 +33,6 @@ const validateCurrentPasswordCorrect = async (req, user) => {
     currentPassword,
     user.password
   );
-  console.log("currentPassword", currentPassword, "user", user);
-  console.log("isCurrentPasswordValid", isCurrentPasswordValid);
   return isCurrentPasswordValid;
 };
 
