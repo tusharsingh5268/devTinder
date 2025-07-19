@@ -14,7 +14,8 @@ const validation = (req) => {
 const validatePasswordEditProfileData = (req) => {
   console.log("req", req);
   const allowedEditFields = [
-    "emailId",
+    "firstName",
+    "lastName",
     "age",
     "about",
     "skills",
